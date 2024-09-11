@@ -8,3 +8,43 @@ convention = {
 metadata = MetaData(naming_convention=convention)
 
 Base = declarative_base(metadata=metadata)
+
+
+
+db = SQLAlchemy()
+
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    character_name = db.Column(db.String, nullable=False)
+
+    auditions = db.relationship("Audition", back_populates="role")
+
+    def actors(self):
+        return [audition.actor for audition in self.auditions]
+
+    def locations(self):
+        return [audition.location for audition in self.auditions]
+
+    def lead(self):
+        hired_auditions = [audition for audition in self.auditions if audition.hired]
+        return hired_auditions[0] if hired_auditions else 'no actor has been hired for this role'
+
+    def understudy(self):
+        hired_auditions = [audition for audition in self.auditions if audition.hired]
+        return hired_auditions[1] if len(hired_auditions) > 1 else 'no actor has been hired for understudy for this role'
+
+
+class Audition(db.Model):
+    __tablename__ = 'auditions'
+    id = db.Column(db.Integer, primary_key=True)
+    actor = db.Column(db.String, nullable=False)
+    location = db.Column(db.String, nullable=False)
+    phone = db.Column(db.Integer, nullable=False)
+    hired = db.Column(db.Boolean, default=False)
+
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+    role = db.relationship("Role", back_populates="auditions")
+
+    def call_back(self):
+        self.hired = True
